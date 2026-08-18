@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <h4> os injection but</h4>
+    <title>Product Feedback</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        .product {
+            padding: 20px;
+            border: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Product Feedback</h1>
+
+    <div class="product">
+        <h2>Example Product</h2>
+        <p>
+            We would love to hear your feedback about this product.
+        </p>
+    </div>
+
+    <form method="POST" action="/feedback">
+
+        <label>Name</label>
+        <input
+            type="text"
+            name="name"
+            placeholder="Your name"
+            required
+        >
+
+        <label>Email</label>
+        <input
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            required
+        >
+
+        <label>Message</label>
+        <textarea
+            name="message"
+            placeholder="Your feedback..."
+            required
+        ></textarea>
+
+        <button type="submit">
+            Submit feedback
+        </button>
+
+    </form>
+
+</body>
+</html>

