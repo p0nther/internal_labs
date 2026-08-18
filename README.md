@@ -15,7 +15,11 @@ Each lab contains:
 🐞 An intentionally vulnerable implementation 
 
 🔎 A practical way to reproduce the vulnerability
+
 🧪 Exploitation examples
+
 🛡️ A fixed/secure implementation
+
 📚 Notes explaining why the vulnerability occurs
+
 🔧 Recommendations for preventing it
