@@ -1,0 +1,3 @@
+<!ENTITY % message "Hello from parameter entity">
+
+<!ENTITY parameter "this Message at web/xxe/parameter.dtd: %message;">

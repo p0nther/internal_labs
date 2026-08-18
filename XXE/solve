@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE root [
+    <!ENTITY test "hello">
+]>
+<root>&test;</root> 
+____________________
+
+or can load dtd file 
+note.dtd
+
+<?xml version="1.0"?>
+<!DOCTYPE root SYSTEM "file:///home/hi/ME/Web_Exploitation/XXE_python/note.dtd">
+<root>&note;</root>
+_________
+now try parameter.dtd
+i will use parameter 'cause its the entity in parameter.dtd
+
+<?xml version="1"?>
+<!DOCTYPE new SYSTEM "file:////home/hi/ME/Web_Exploitation/XXE_python/parameter.dtd">
+<anything>&parameter;</anything>
