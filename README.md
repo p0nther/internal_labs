@@ -12,7 +12,8 @@ I'm building these labs to practice identifying common security vulnerabilities 
 
 Each lab contains:
 
-🐞 An intentionally vulnerable implementation
+🐞 An intentionally vulnerable implementation 
+
 🔎 A practical way to reproduce the vulnerability
 🧪 Exploitation examples
 🛡️ A fixed/secure implementation
