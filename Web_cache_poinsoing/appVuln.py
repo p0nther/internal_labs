@@ -10,7 +10,7 @@ CACHE_TTL = 30
 
 @app.route("/")
 def home():
-    path = request.path
+    path = request.full_path
     now = time.time()
 
     # Cache HIT
