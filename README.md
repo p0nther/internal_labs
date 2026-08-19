@@ -1,4 +1,4 @@
-Internal Labs
+# Internal Labs
 
 A collection of intentionally vulnerable web security labs that I build locally to understand vulnerabilities, exploit techniques, and—most importantly—how to fix them in real code.
 
