@@ -10,6 +10,15 @@ FILES_DIR = os.path.realpath(os.path.join(BASE_DIR, "files"))
 def home():
     return """
     <h1>Fixed Path Traversal Lab</h1>
+
+   <p>Try:</p>
+
+    <ul>
+        <a href="/download?file=cat.jpg">cat image</a>
+        <p> </p>
+        <a href="/download?file=dog.jpg">dog image</a>
+    </ul>
+
     """
 
 @app.route("/download")
