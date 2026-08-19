@@ -30,6 +30,9 @@ def download():
 
     path = os.path.join(FILES_DIR, filename)
 
+    if not os.path.exists(path):
+        return "File not found", 404
+    
     return send_file(path)
 
 if __name__ == "__main__":
