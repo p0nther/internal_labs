@@ -34,7 +34,7 @@ def download():
         return send_file(path)
 
     except FileNotFoundError:
-        return "file not found"
+        return "file not found", 400
 
 if __name__ == "__main__":
     app.run(debug=False)
