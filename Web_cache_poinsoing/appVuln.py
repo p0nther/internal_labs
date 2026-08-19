@@ -39,7 +39,7 @@ def home():
     response_body = f"""
     <html>
         <head>
-            <script src="https://{host}/app.js"></script>
+            <script type="text/javascript" src="https://{host}/app.js"></script>
         </head>
         <body>
             <h1>Welcome, Vuln app</h1>
