@@ -23,16 +23,16 @@ def home():
 
 @app.route("/download")
 def download():
-    filename = request.args.get("file")
-
-    if not filename:
-        return "Missing file parameter", 400
-
-    path = os.path.join(FILES_DIR, filename)
-
-    if not os.path.exists(path):
-        return "File not found", 404
+    try:
+        filename = request.args.get("file")
     
+        if not filename:
+            return "Missing file parameter", 400
+    
+        path = os.path.join(FILES_DIR, filename)
+     
+    except ValueError:
+        print("file not found")
     return send_file(path)
 
 if __name__ == "__main__":
