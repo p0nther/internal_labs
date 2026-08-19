@@ -12,12 +12,14 @@ def home():
     <h1>Vuln Path Traversal Lab</h1>
 
     <p>Try:</p>
-
+   
     <ul>
-        <li>/download?file=cat.jpg</li>
-        <li>/download?file=dog.jpg</li>
+        <a href="/download?file=cat.jpg">cat image</a>
+        <p> </p>
+        <a href="/download?file=dog.jpg">dog image</a>
     </ul>
     """
+
 
 @app.route("/download")
 def download():
