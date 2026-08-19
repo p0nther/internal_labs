@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 cache = {}
 
-TRUSTED_HOST = "cdn.example.com"
+TRUSTED_HOST = "trusted-cdn.free.beeceptor.com"
 
 @app.route("/")
 def home():
