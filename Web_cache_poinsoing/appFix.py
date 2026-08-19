@@ -31,7 +31,7 @@ def home():
     response_body = f"""
     <html>
         <head>
-            <script src="https://{TRUSTED_HOST}/app.js"></script>
+            <script type="text/javascript" src="https://{TRUSTED_HOST}/app.js"></script>
         </head>
         <body>
             <h1>Welcome, Fixed app</h1>
