@@ -1,5 +1,6 @@
-from flask import Flask
+from flask import Flask, request
 import time
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -17,11 +18,15 @@ def home():
     response = f"""
     <html>
         <head>
+
             <script src="https://{TRUSTED_HOST}/app.js"></script>
         </head>
         <body>
+
+            <h1>Fixed app</h1>
             <h1>Welcome</h1>
-            <p>Generated at {time.time()}</p>
+            <p>Generated at {datetime.fromtimestamp(time.time())}</p>
+            <h4>use hardcode host and don't trust user input </h4>
         </body>
     </html>
     """
