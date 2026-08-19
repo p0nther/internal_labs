@@ -408,6 +408,8 @@ A good methodology is to move gradually.
 
 ## Step 1: Determine Whether Caching Exists
 
+Before testing for cache poisoning, you need to confirm that a cache is actually present.
+
 Look for headers such as:
 
 ```http
@@ -417,17 +419,121 @@ X-Cache
 CF-Cache-Status
 ```
 
-Common indicators:
+A common pattern is:
+
+### Cache Miss
+
+```http
+Cache-Control: max-age=30
+Age: 0
+X-Cache: MISS
+Content-Length: 4128
+```
+
+Meaning:
+
+```text
+Request
+   │
+   ▼
+Cache
+   │
+   ▼
+No Cached Entry
+   │
+   ▼
+Origin Server
+   │
+   ▼
+Response Generated
+```
+
+The cache had no stored response, so the request reached the application.
+
+---
+
+### Cache Hit
+
+```http
+Cache-Control: max-age=30
+Age: 8
+X-Cache: HIT
+Content-Length: 4128
+```
+
+Meaning:
+
+```text
+Request
+   │
+   ▼
+Cache
+   │
+   ▼
+Cached Response Found
+   │
+   ▼
+Response Returned
+```
+
+Notice:
+
+```http
+Age: 8
+```
+
+This indicates the response has already existed inside the cache for 8 seconds.
+
+The `Age` header often increases over time:
+
+```http
+Age: 1
+Age: 8
+Age: 15
+Age: 29
+```
+
+until it reaches:
+
+```http
+Cache-Control: max-age=30
+```
+
+After the object expires, the cache usually requests a fresh copy from the origin server.
+
+---
+
+### Understanding These Headers
+
+#### Cache-Control
+
+```http
+Cache-Control: max-age=30
+```
+
+Tells the cache that the response may be reused for 30 seconds.
+
+#### Age
+
+```http
+Age: 8
+```
+
+Shows how long the response has been stored in cache.
+
+#### X-Cache
 
 ```http
 X-Cache: HIT
 ```
 
+The response came from cache.
+
 ```http
-CF-Cache-Status: HIT
+X-Cache: MISS
 ```
 
-A cache hit indicates cached content.
+The response came from the origin application because no cached copy existed.
 
 ---
 
