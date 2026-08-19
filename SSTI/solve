@@ -1,0 +1,19 @@
+
+How to prevent :
+username=vaule_username the template take it as data and the code work like that 
+Template source
+      â†“
+"Hello {{ username }}"
+      â†“
+Jinja2 parses the template
+      â†“
+Finds {{ username }}
+      â†“
+Looks up "username" in context
+      â†“
+"context['username']" â†’ "p0nther"
+      â†“
+"Hello p0nther"
+________________________
+if you don't wanna to break the syntax do that 
+}} {{3*3
