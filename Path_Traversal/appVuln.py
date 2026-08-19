@@ -12,7 +12,7 @@ def home():
     <h1>Vuln Path Traversal Lab</h1>
 
     <p>Try:</p>
-   
+
     <ul>
         <a href="/download?file=cat.jpg">cat image</a>
         <p> </p>
