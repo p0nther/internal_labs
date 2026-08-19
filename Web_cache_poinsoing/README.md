@@ -860,6 +860,13 @@ The vulnerability exists because:
 
 5. Attackers exploit that mismatch.
 
+6. keyed input means What the cdn looks at to check if they already have a saved copy.
+
+7. unkeyed input means What the cdn ignores, but the backend server still reads.
+
+8. buster A unique fake value you add to force the cdn to fetch a fresh page from the server instead of giving you an old saved copy.
+
+
 Once you understand cache keys, cache hits, unkeyed inputs, and response generation, Web Cache Poisoning becomes much easier to understand.
 
 As a bug bounty hunter, don't focus on memorizing header payloads.
