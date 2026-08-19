@@ -637,7 +637,7 @@ Now an attacker can influence the cached page.
 
 # Cache Poisoning Through Query Parameters
 
-Sometimes applications reflect query parameters.
+Sometimes applications reflect query parameters. read more about "cache buster"
 
 Example:
 
