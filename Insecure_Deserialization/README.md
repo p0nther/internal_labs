@@ -805,6 +805,9 @@ Many historical deserialization exploits relied on gadget chains found in third-
 ---
 
 # Quick Summary
+Serialization: Taking a live object in memory and converting it into a string or byte stream to save or send over a network.
+
+Deserialization: Taking that string or byte stream and rebuilding the live object back into memory.
 
 Serialization:
 
