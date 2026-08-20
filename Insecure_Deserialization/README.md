@@ -846,6 +846,38 @@ Can Lead To:
 * Sensitive data disclosure
 * Remote Code Execution (RCE)
 
+Core Concept
+
+Insecure Deserialization occurs when an application trusts and reconstructs an attacker-controlled serialized byte stream without validation.
+
+Python (`pickle`) - The VM Approach
+
+• Mechanism: `pickle` is a Virtual Machine. The payload itself contains bytecode instructions (opcodes like `REDUCE`, `GLOBAL`).
+
+• Exploitation: The payload explicitly tells the server what functions to call (e.g., `os.system`).
+
+• Key Hook: The `__reduce__` method is the standard way to inject arbitrary execution logic.
+
+PHP (`unserialize`) - The Gadget Chain Approach
+
+• Mechanism: `unserialize()` only restores object properties (data). It does not contain execution opcodes.
+
+• Exploitation: Requires POP Chains (Property-Oriented Programming). Attackers control properties of classes that already exist in the codebase. When the object is destroyed or awakened, its "magic methods" (`__destruct`, `__wakeup`, `__toString`) trigger dangerous functions (sinks) like `system()`, `eval()`, or `include()`.
+
+• Key Difference: PHP exploits rely on existing server code; Python exploits are self-contained instructions.
+
+Verification Tips
+
+• Python: Use `__dict__` or a custom `__repr__` method to inspect the internal state of restored objects, as `print()` only shows the memory address by default.
+
+• PHP: Use `var_dump()` or `print_r()` instead of `echo` to inspect objects, as `echo` will fail on objects lacking `__toString()`.
+
+Security Takeaway
+
+• Avoid native serialization (`pickle`, `unserialize`) on user input. Use safe, data-only formats like JSON.
+
+• If using PHP, use `allowed_classes` to whitelist objects if you must deserialize.
+
 Dangerous Functions:
 
 ```python
