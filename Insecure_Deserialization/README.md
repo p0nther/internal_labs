@@ -805,17 +805,35 @@ Many historical deserialization exploits relied on gadget chains found in third-
 ---
 
 # Quick Summary
-Serialization: Taking a live object in memory and converting it into a string or byte stream to save or send over a network.
+The Core Concept: What is Deserialization?
 
-Deserialization: Taking that string or byte stream and rebuilding the live object back into memory.
+    Serialization: Taking a live object in memory and converting it into a string or byte stream to save or send over a network.
 
-Serialization:
+    Deserialization: Taking that string or byte stream and rebuilding the live object back into memory.
 
-* Converts objects into transferable data.
+The vulnerability happens when an application trusts an incoming byte stream from an untrusted user and reconstructs it without checking what it's actually doing.
+Python (pickle): The "Instruction List" Engine
 
-Deserialization:
+Python’s pickle is not just a data format—it is literally a mini programming language (a Virtual Machine).
 
-* Reconstructs original objects.
+    How Python does it: When you deserialize a pickle payload with pickle.loads(), pickle doesn't just read variables. It reads a list of step-by-step instructions (Opcodes) telling its Virtual Machine what to do.
+
+    The Core Bug: The pickle payload itself contains the exact instructions: "Import module X, grab function Y, and run it with parameter Z."
+
+    Why it executes code: You don't need any pre-existing code on the server. The payload is the execution order (REDUCE opcode).
+
+PHP (unserialize): The "Domino Effect" (POP Chains)
+
+PHP's unserialize() is totally different. It cannot run opcodes from the payload. It only restores data properties (strings, integers, arrays).
+
+    How PHP does it: PHP converts text like O:4:"User":1:{s:4:"name";s:4:"alex";} back into a User object setting $user->name = "alex".
+
+    The Core Bug: PHP has automatic "magic methods" that run automatically when objects are created, used, or destroyed (like __wakeup() or __destruct()).
+
+    Why it executes code: If an attacker sends a serialized payload of an object that already exists in the application's source code, PHP creates that object. When the script finishes, PHP automatically calls __destruct(). If that __destruct() function happens to contain dangerous code (like eval($this->cmd) or system($this->file)), the attacker-controlled variables trigger the execution.
+
+Think of PHP like setting up a line of dominoes that already exist inside the app source code; your serialized payload just picks which starting domino to push.
+
 
 Insecure Deserialization:
 
