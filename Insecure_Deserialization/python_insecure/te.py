@@ -1,5 +1,5 @@
 """
-it's use opcode to tell pickle what have to do 
+it's use opcode to tell pickle what have to do
 pickle stream 0: \x80 PROTO      4
     2: \x95 FRAME      43
    11: \x8c SHORT_BINUNICODE 'posix'
@@ -10,9 +10,9 @@ pickle stream 0: \x80 PROTO      4
    52: R    REDUCE
    53: .    STOP
    _____________________
-   
+
    what is opcode the part of a computer instruction that tells the processor what basic task to do, like add numbers, move data, or stop
-   
+
    _______
 
 
@@ -24,6 +24,8 @@ pickle stream 0: \x80 PROTO      4
 import pickle
 import base64
 import os
+import json
+
 
 class Exploit:
     def __reduce__(self):
@@ -51,7 +53,7 @@ class UserProfile:
 
 # Create a normal object instance
 
- 
+
 user=pickle.dumps(UserProfile())
 print(f"serilization from obj user to transportabe format \nthe row data from pickle.dumps : {user}")
 encode_user=base64.b64encode(user)
@@ -69,3 +71,16 @@ de_payload=pickle.loads(base64.b64decode(encode_payload))
 
 de_user=pickle.loads(base64.b64decode(encode_user))
 print(f"Deserlize the user: {de_user.__dict__}")
+
+
+print("__________________FIXED-JSON____________________________")
+
+fixed= UserProfile()
+fixed.username="p0nther fix| json"
+fixed.role="admin| json"
+
+serial_json=json.dumps(fixed.__dict__)
+Deserial_json=json.loads(serial_json)
+
+print(f"save serial-json: {serial_json}")
+print(f"save Deserial-json: {repr(Deserial_json)}")
