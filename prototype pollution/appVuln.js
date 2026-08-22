@@ -2,31 +2,7 @@ const express = require("express");
 
 const app = express();
 
-app.use(express.json());
-
-function merge(target, source) {
-    for (let key in source) {
-
-        if (
-            typeof source[key] === "object" &&
-            source[key] !== null
-        ) {
-
-            if (!target[key]) {
-                target[key] = {};
-            }
-
-            merge(target[key], source[key]);
-
-        } else {
-
-            target[key] = source[key];
-
-        }
-    }
-
-    return target;
-}
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
 
@@ -35,25 +11,54 @@ app.get("/", (req, res) => {
     res.send(`
         <h1>Prototype Pollution Lab</h1>
 
-        <p>isAdmin: ${user.isAdmin}</p>
+        <form method="POST" action="/update">
+            Key:
+            <input name="key">
+            <br><br>
 
-        <p>theme: ${user.theme}</p>
+            Value:
+            <input name="value">
+            <br><br>
 
-        <p>Send POST /update</p>
+            <button>Submit</button>
+        </form>
+
+        <hr>
+
+        <p>isAdmin = ${user.isAdmin}</p>
+
+        <a href="/admin">Admin Panel</a>
     `);
 });
 
 app.post("/update", (req, res) => {
 
-    const settings = {};
+    const key = req.body.key;
+    const value = req.body.value;
 
-    merge(settings, req.body);
+    // VULNERABLE
+    Object.prototype[key] = value;
 
-    res.json({
-        merged: settings
-    });
+    res.send(`
+        Pollution Applied
+
+        <br><br>
+
+        <a href="/">Back</a>
+    `);
+});
+
+app.get("/admin", (req, res) => {
+
+    const user = {};
+
+    if (user.isAdmin) {
+        return res.send("<h1>Admin Access Granted</h1>");
+    }
+
+    res.send("<h1>Access Denied</h1>");
 });
 
 app.listen(3000, () => {
-    console.log("Running on http://127.0.0.1:3000");
+    console.log("http://127.0.0.1:3000");
 });
