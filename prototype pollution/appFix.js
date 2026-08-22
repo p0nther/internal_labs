@@ -2,51 +2,107 @@ const express = require("express");
 
 const app = express();
 
-app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-function merge(target, source) {
+// Prevent modifications to Object.prototype
+Object.freeze(Object.prototype);
 
-    for (let key in source) {
+app.get("/", (req, res) => {
 
-        if (
-            key === "__proto__" ||
-            key === "constructor" ||
-            key === "prototype"
-        ) {
-            continue;
-        }
+    // Object with no prototype
+    const user = Object.create(null);
 
-        if (
-            typeof source[key] === "object" &&
-            source[key] !== null
-        ) {
+    res.send(`
+        <h1>Prototype Pollution - Fixed</h1>
 
-            if (!target[key]) {
-                target[key] = {};
-            }
+        <form method="POST" action="/update">
 
-            merge(target[key], source[key]);
+            Key:
+            <input name="key">
 
-        } else {
+            <br><br>
 
-            target[key] = source[key];
-        }
-    }
+            Value:
+            <input name="value">
 
-    return target;
-}
+            <br><br>
+
+            <button>
+                Submit
+            </button>
+
+        </form>
+
+        <hr>
+
+        <p>isAdmin = ${user.isAdmin}</p>
+
+        <a href="/admin">
+            Admin Panel
+        </a>
+    `);
+});
 
 app.post("/update", (req, res) => {
 
-    const settings = {};
+    const key = req.body.key;
+    const value = req.body.value;
 
-    merge(settings, req.body);
+    const blocked = [
+        "__proto__",
+        "prototype",
+        "constructor"
+    ];
 
-    res.json({
-        merged: settings
-    });
+    if (blocked.includes(key)) {
+
+        return res.send(`
+            Dangerous key blocked!
+            <br><br>
+            <a href="/">Back</a>
+        `);
+    }
+
+    try {
+
+        // Attempted pollution will fail because
+        // Object.prototype is frozen
+        Object.prototype[key] = value;
+
+    } catch (e) {
+
+        console.log("Blocked:", e.message);
+
+    }
+
+    res.send(`
+        Property saved
+        <br><br>
+        <a href="/">Back</a>
+    `);
+});
+
+app.get("/admin", (req, res) => {
+
+    // No prototype chain
+    const user = Object.create(null);
+
+    if (user.isAdmin) {
+
+        return res.send(`
+            <h1>Admin Access Granted</h1>
+        `);
+    }
+
+    res.send(`
+        <h1>Access Denied</h1>
+    `);
 });
 
 app.listen(3000, () => {
-    console.log("Running on http://127.0.0.1:3000");
+
+    console.log(
+        "http://127.0.0.1:3000"
+    );
+
 });
