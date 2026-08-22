@@ -2,7 +2,7 @@ from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
-TRUSTED_HOST = "127.0.0.1:5000"
+TRUSTED_HOST = "127.0.0.1:5001"
 
 last_reset_link = ""
 
@@ -51,4 +51,4 @@ def reset():
     return "Password reset page"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,port=5001)
