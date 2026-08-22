@@ -899,28 +899,62 @@ Explicitly copy only expected fields.
 
 # Additional Defenses
 
-## Block Dangerous Keys
-
-Reject:
-
-```javascript
-__proto__
-```
+This code uses **three defensive layers** to remediate Prototype Pollution. Each mechanism targets a different stage of the vulnerability lifecycle:
 
 ---
 
-Reject:
+### 1. `Object.freeze(Object.prototype)`
 
-```javascript
-prototype
-```
+* **Location:** Top of application startup
+* **What it does:** Freezes the base `Object.prototype`, making it immutable.
+* **Why it fixes it:** In standard JavaScript, assigning properties dynamically (e.g., `Object.prototype[key] = value`) modifies the global object prototype. Once frozen, any attempt to add, delete, or modify properties on `Object.prototype` throws a `TypeError` (caught by your `try...catch` block).
+* **Security Impact:** Acts as a global fail-safe. Even if an attacker bypasses user input filters, they cannot write new properties to the global prototype.
 
 ---
 
-Reject:
+### 2. `Object.create(null)`
 
+* **Location:** Inside `app.get("/")` and `app.get("/admin")`
+* **What it does:** Instantiates a bare object without linking it to JavaScript’s standard prototype chain (`user.__proto__` is `undefined`).
+* **Why it fixes it:** Standard object literals (`const user = {}`) inherit from `Object.prototype`. If `Object.prototype.isAdmin` is polluted, `{}.isAdmin` evaluates to the polluted value. An object created with `null` prototype has no parent prototype to inherit from:
 ```javascript
-constructor
+const standardUser = {};           // standardUser.isAdmin -> inherits from Object.prototype
+const nullProtoUser = Object.create(null); // nullProtoUser.isAdmin -> always undefined
+
+```
+
+
+* **Security Impact:** Eliminates property lookup fallback on the target object.
+
+---
+
+### 3. Key Denylist / Blocklist Filtering
+
+* **Location:** Inside `app.post("/update")`
+* **What it does:** Checks incoming user keys against known dangerous prototype keys (`__proto__`, `constructor`, `prototype`).
+* **Why it fixes it:** Rejects malicious payloads at the input layer before any assignment logic executes.
+* **Security Impact:** Provides input validation. *(Note: While denylists are good for defense-in-depth, options #1 and #2 provide the primary structural protection).*
+
+---
+
+### Combined Execution Flow
+
+```
+User Input (key, value)
+         │
+         ▼
+[1] Blocklist Check  ──(Match)──► Reject Input ("Dangerous key blocked!")
+         │
+      (Pass)
+         ▼
+[2] Object.prototype Assignment Attempt
+         │
+         ▼
+    Frozen Prototype Check ──(Fails)──► Trigger Catch Block ("Blocked: Cannot add property...")
+                                                    │
+                                                    ▼
+[3] Property Lookup (/admin) ──► Object.create(null) ──► Prototype Chain Absent ──► Access Denied
+
 ```
 
 ---
