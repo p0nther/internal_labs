@@ -979,7 +979,71 @@ __proto__
 constructor.prototype
 prototype
 ```
+______
+In JavaScript, `Object.prototype` is the **master blueprint** that almost every single object in JavaScript inherits from.
 
+When you write `Object.prototype.anything = "hello"`, you are adding a property called `anything` directly to that master blueprint. Because of how JavaScript looks up properties, **every object in your entire application will now act as if it has `anything: "hello"**`, unless it defined its own property with that name first.
+
+---
+
+### 1. How JavaScript Looks Up Properties (The Prototype Chain)
+
+When you ask JavaScript for `myObject.anything`, it follows a simple search path:
+
+1. **Step 1:** Does `myObject` have a property named `anything` directly on itself?
+* *Yes:* Return that value.
+* *No:* Go look at `myObject.__proto__` (which points to `Object.prototype`).
+
+
+2. **Step 2:** Does `Object.prototype` have a property named `anything`?
+* *Yes:* Return that value.
+* *No:* Return `undefined`.
+
+
+
+---
+
+### 2. A Concrete Code Example
+
+```javascript
+// Step 1: Object prototype is normal
+let user = {};
+console.log(user.anything); // Output: undefined
+
+// Step 2: Pollute the master blueprint
+Object.prototype.anything = "POLLUTED";
+
+// Step 3: Check ANY object (even newly created ones or existing ones)
+let admin = {};
+let config = { timeout: 1000 };
+
+console.log(admin.anything);  // Output: "POLLUTED"
+console.log(config.anything); // Output: "POLLUTED"
+
+```
+
+Notice that we never added `anything` to `admin` or `config`. They inherited it automatically from `Object.prototype`.
+
+---
+
+### 3. Why This Causes Security Vulnerabilities (RCE / Privilege Escalation)
+
+Developers often write code that relies on **optional properties** or **fallback default values** using `if` checks or logical OR (`||`):
+
+```javascript
+// Developer code inside a server function:
+function checkAccess(user) {
+    // If user.isAdmin is not defined on the object, 
+    // JS checks Object.prototype.isAdmin
+    if (user.isAdmin) { 
+        grantAdminAccess();
+    }
+}
+
+```
+
+* **Normal state:** `user.isAdmin` is `undefined` (falsy), so access is denied.
+* **Polluted state (`Object.prototype.isAdmin = true`):** Every empty object `{}` now evaluates `user.isAdmin` as `true`. Every user becomes an admin instantly.
 Common Sources:
 
 * Deep merge functions
