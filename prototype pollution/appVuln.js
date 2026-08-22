@@ -9,7 +9,7 @@ app.get("/", (req, res) => {
     const user = {};
 
     res.send(`
-        <h1>Prototype Pollution Lab</h1>
+        <h1>Prototype Pollution Lab Vuln</h1>
 
         <form method="POST" action="/update">
             Key:
@@ -59,6 +59,6 @@ app.get("/admin", (req, res) => {
     res.send("<h1>Access Denied</h1>");
 });
 
-app.listen(3000, () => {
-    console.log("http://127.0.0.1:3000");
+app.listen(5000, () => {
+    console.log("http://127.0.0.1:5000");
 });
